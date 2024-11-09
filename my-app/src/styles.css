@@ -1,0 +1,130 @@
+/* styles.css */
+
+/* General Styles for the App */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 2rem;
+    color: #333;
+}
+
+h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+/* Page Layout Styles */
+.App {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+div {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Form Elements */
+label {
+    display: block;
+    margin: 10px 0 5px;
+    font-size: 1rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 8px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Loading Spinner */
+.loading {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #3498db;
+}
+
+/* Table and List Styles */
+ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+li {
+    background-color: #ecf0f1;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+}
+
+strong {
+    color: #2c3e50;
+}
+
+/* Custom Styles for Different Pages */
+input[type="text"] {
+    font-family: monospace;
+}
+
+/* Specific Page Adjustments */
+.StudentPage h2,
+.TeacherPage h2 {
+    color: #27ae60;
+}
+
+.StudentView,
+.TeacherView {
+    margin-top: 20px;
+}
+
+select {
+    cursor: pointer;
+}
+
+/* Error/Alert Messages */
+.alert {
+    color: red;
+    font-size: 1.1rem;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+}
+
