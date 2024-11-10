@@ -3,20 +3,18 @@ import { useNavigate } from 'react-router-dom';
 
 function LoginPage({ setRole }) {
 
-    const [password, setPassword] = useState('');  // Password field
-    const [srn, setSrn] = useState('');  // For student SRN
-    const [gId, setGId] = useState('');  // For teacher G_ID
-    const [userRole, setUserRole] = useState('student');  // Default role is 'student'
+    const [password, setPassword] = useState('');
+    const [srn, setSrn] = useState('');
+    const [gId, setGId] = useState('');
+    const [userRole, setUserRole] = useState('student');
     const navigate = useNavigate();
 
     const handleLogin = async () => {
-        // Validate input fields
         if (!password) {
             alert("Please enter your password.");
             return;
         }
 
-        // Prepare the login data based on role
         const loginData = {
             password,
             role: userRole,
@@ -36,15 +34,17 @@ function LoginPage({ setRole }) {
             const data = await response.json();
 
             if (response.status === 201) {
-                // If login is successful, set the role and navigate
                 setRole(userRole);
+
+                // Store the UserID (SRN for students, G_ID for teachers) in localStorage
                 if (userRole === 'student') {
+                    localStorage.setItem('UserID', srn);
                     navigate('/student');
                 } else {
+                    localStorage.setItem('UserID', gId);
                     navigate('/teacher');
                 }
             } else {
-                // Handle error messages
                 alert(data.message || 'Login failed');
             }
         } catch (error) {
@@ -54,7 +54,6 @@ function LoginPage({ setRole }) {
     };
 
     const handleCreateAccount = () => {
-        // Redirect to the account creation page
         navigate('/create-account');
     };
 
@@ -110,7 +109,11 @@ function LoginPage({ setRole }) {
             </label>
             <br />
             <button onClick={handleLogin}>Login</button>
-            <button onClick={handleCreateAccount}>Create Account</button>
+            
+            {/* Create Account Button */}
+            <div style={{ marginTop: '10px' }}>
+                <button onClick={handleCreateAccount}>Create Account</button>
+            </div>
         </div>
     );
 }

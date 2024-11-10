@@ -1,9 +1,14 @@
-
 -- CREATE DATABASE CAPSTONERS;
 -- USE CAPSTONERS;
 
 
-
+-- CREATE TABLE Login (
+--     UserID VARCHAR(20) NOT NULL,
+--     Email VARCHAR(100) NOT NULL,
+--     Password VARCHAR(100) NOT NULL,
+--     Role ENUM('Student', 'Teacher') NOT NULL,
+--     PRIMARY KEY (UserID, Email, Password, Role)
+-- );
 
 
 -- CREATE TABLE student (
@@ -82,9 +87,8 @@
 --   Parameter2 decimal(5,2) DEFAULT NULL,
 --   Parameter3 decimal(5,2) DEFAULT NULL,
 --   Parameter4 decimal(5,2) DEFAULT NULL,
---   Semester int NOT NULL,
 --   avg_marks decimal(4,2) DEFAULT '0.00',
---   PRIMARY KEY (SRN, G_id, Semester, Assessment_Number),
+--   PRIMARY KEY (SRN, G_id, Assessment_Number),
 --   KEY G_id (G_id),
 --   KEY idx_marksheet_team (T_id),
 --   CONSTRAINT marksheet_ibfk_1 FOREIGN KEY (SRN) REFERENCES student (SRN),
@@ -114,12 +118,11 @@
 --     IN in_Parameter2 DECIMAL(5,2),
 --     IN in_Parameter3 DECIMAL(5,2),
 --     IN in_Parameter4 DECIMAL(5,2),
---     IN in_semester INT
 -- )
 -- BEGIN
 --     -- Insert marks without including Total, as it is a generated column
---     INSERT INTO Marksheet (SRN, G_id, T_id, Assessment_Number, Parameter1, Parameter2, Parameter3, Parameter4,semester)
---     VALUES (in_SRN, in_G_id, in_T_id, in_Assessment_Number, in_Parameter1, in_Parameter2, in_Parameter3, in_Parameter4,in_semester);
+--     INSERT INTO Marksheet (SRN, G_id, T_id, Assessment_Number, Parameter1, Parameter2, Parameter3, Parameter4)
+--     VALUES (in_SRN, in_G_id, in_T_id, in_Assessment_Number, in_Parameter1, in_Parameter2, in_Parameter3, in_Parameter4);
 -- END //
 -- DELIMITER ;
 
@@ -141,7 +144,7 @@
 --     student.Name AS Student_Name,
 --     team.Project_Title AS Team_Name,
 --     guide.G_name AS Team_Guide
---   FROM 
+--   FROM
 --     semester
 --   INNER JOIN 
 --     student ON semester.SRN = student.SRN
@@ -197,22 +200,22 @@
 -- ('T003', 'Cyber Defense Model', 'PES1UG22CS003', 'PES1UG22CS001', 'PES1UG22CS005', 'PES1UG22CS002', 'G002', 'CyberSec');
 
 
--- INSERT INTO marksheet (SRN, G_id, T_id, Assessment_Number, Parameter1, Parameter2, Parameter3, Parameter4, Semester, avg_marks) VALUES
--- ('PES1UG22CS001', 'G001', 'T001', 1, 88.50, 75.00, 82.00, 90.00, 5, 83.38),
--- ('PES1UG22CS002', 'G001', 'T001', 1, 76.00, 85.00, 78.00, 88.00, 5, 81.75),
--- ('PES1UG22CS003', 'G002', 'T003', 2, 80.00, 70.00, 75.00, 68.00, 6, 73.25),
--- ('PES1UG22CS004', 'G004', 'T002', 1, 90.00, 85.00, 88.00, 82.00, 7, 86.25),
--- ('PES1UG22CS005', 'G004', 'T002', 1, 70.00, 65.00, 68.00, 72.00, 8, 68.75);
+-- INSERT INTO marksheet (SRN, G_id, T_id, Assessment_Number, Parameter1, Parameter2, Parameter3, Parameter4, avg_marks) VALUES
+-- ('PES1UG22CS001', 'G001', 'T001', 1, 88.50, 75.00, 82.00, 90.00, 83.38),
+-- ('PES1UG22CS002', 'G001', 'T001', 1, 76.00, 85.00, 78.00, 88.00, 81.75),
+-- ('PES1UG22CS003', 'G002', 'T003', 2, 80.00, 70.00, 75.00, 68.00, 73.25),
+-- ('PES1UG22CS004', 'G004', 'T002', 1, 90.00, 85.00, 88.00, 82.00, 86.25),
+-- ('PES1UG22CS005', 'G004', 'T002', 1, 70.00, 65.00, 68.00, 72.00, 68.75);
 
 
 
--- select * from student;
--- select * from team;
--- select * from marksheet;
--- select * from guide;
--- select * from semester;
--- select * from panel;
-
+select * from student;
+select * from team;
+select * from marksheet;
+select * from guide;
+select * from semester;
+select * from panel;
+select * from login;
 
 
 

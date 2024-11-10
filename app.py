@@ -7,25 +7,30 @@ CORS(app)
 
 # MySQL configurations
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = ''
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = ''
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = '7151'
+app.config['MYSQL_DB'] = 'CAPSTONERS'
 
 mysql = MySQL(app)
 
-# Endpoint for student view with SRN filter
-@app.route('/student', methods=['GET'])
+
+
+
+
+# Modify the '/student' endpoint to retrieve user data based on the logged-in UserID
+@app.route('/student', methods=['POST'])
 def student_view():
-    srn = request.args.get('srn')  # Get the SRN from the query parameters
+    data = request.get_json()  # Get JSON data from request
+    user_id = data.get('UserID')  # Extract UserID directly from the request body
+
+    if not user_id:
+        return jsonify({"error": "UserID is required"}), 400
+
     results = {}
 
-    # Ensure SRN is provided
-    if not srn:
-        return jsonify({"error": "SRN parameter is required"}), 400
-
-    # Get data from Student table for the specified SRN
+    # Fetch data for student based on UserID (assumed to be SRN)
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM student WHERE SRN = %s", (srn,))
+    cur.execute("SELECT * FROM student WHERE SRN = %s", (user_id,))
     student = cur.fetchone()
     if student:
         results['student'] = {
@@ -34,21 +39,21 @@ def student_view():
     else:
         return jsonify({"error": "Student not found"}), 404
 
-    # Get data from Marksheet table for the specified SRN
-    cur.execute("SELECT * FROM marksheet WHERE SRN = %s", (srn,))
+    # Fetch marksheet data for the student
+    cur.execute("SELECT * FROM marksheet WHERE SRN = %s", (user_id,))
     marksheets = cur.fetchall()
     results['marksheets'] = [
         {
             'SRN': row[0], 'G_id': row[1], 'T_id': row[2], 'Assessment_Number': row[3],
             'Parameter1': row[4], 'Parameter2': row[5], 'Parameter3': row[6], 'Parameter4': row[7],
-            'Semester': row[8], 'Average_Marks': row[9]
+            'Average_Marks': row[8]
         } for row in marksheets
     ]
 
-    # Get data from Team table where the specified SRN is a member
+    # Fetch team data for the student
     cur.execute("""
         SELECT * FROM team WHERE SRN1 = %s OR SRN2 = %s OR SRN3 = %s OR SRN4 = %s
-    """, (srn, srn, srn, srn))
+    """, (user_id, user_id, user_id, user_id))
     teams = cur.fetchall()
     results['teams'] = [
         {
@@ -57,17 +62,12 @@ def student_view():
         } for row in teams
     ]
 
-    # Get data from Semester table for the specified SRN
-    cur.execute("SELECT * FROM semester WHERE SRN = %s", (srn,))
-    semester = cur.fetchone()
-    if semester:
-        results['semester'] = {
-            'SRN': semester[0], 'Sem_5': semester[1], 'Sem_6': semester[2],
-            'Sem_7': semester[3], 'Sem_8': semester[4]
-        }
-
     cur.close()
     return jsonify(results)
+
+
+
+
 
 # Endpoint for teacher view with SRN filter
 @app.route('/teacher', methods=['GET'])
@@ -95,7 +95,7 @@ def teacher_view():
         {
             'SRN': row[0], 'G_id': row[1], 'T_id': row[2], 'Assessment_Number': row[3],
             'Parameter1': row[4], 'Parameter2': row[5], 'Parameter3': row[6], 'Parameter4': row[7],
-            'Semester': row[8], 'Average_Marks': row[9]
+            'Average_Marks': row[8]
         } for row in marksheets
     ]
 
@@ -124,50 +124,66 @@ def teacher_view():
     return jsonify(results)
 
 
+
+
+
 @app.route('/create-account', methods=['POST'])
 def create_account():
     data = request.get_json()
-    print(data)
 
-    # Example validation (email, password, role)
     if 'email' not in data or 'password' not in data or 'role' not in data:
         return jsonify({"error": "Missing required fields"}), 400
 
-    # Extract data
-    if data['role'] == 'student':
-        user_id = data['srn']
-    else:
-        user_id = data['gId']
+    role = data['role']
     email = data['email']
     password = data['password']
-    role = data['role']
-    
-    print(user_id, email, password, role) 
 
-    # Logic to create an account (insert into the Login table)
     try:
-        # Connect to the database
         cursor = mysql.connection.cursor()
 
-        # SQL query to insert into the Login table
-        insert_query = """
-        INSERT INTO Login (UserID, Email, Password, Role)
-        VALUES (%s, %s, %s, %s)
-        """
-        
-        # Executing the insert query with the provided data
-        cursor.execute(insert_query, (user_id, email, password, role))
+        # Student role
+        if role == 'student':
+            srn = data.get('srn')
+            name = data.get('name')
+            phone = data.get('phone')
+            gpa = data.get('gpa')
 
-        # Commit the transaction
+            # Insert into student table
+            cursor.execute("""
+                INSERT INTO student (SRN, Name, Email, Phone, gpa)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (srn, name, email, phone, gpa))
+
+            user_id = srn  # For login table
+
+        # Teacher role
+        elif role == 'teacher':
+            g_id = data.get('gId')
+            g_name = data.get('gName')
+            g_domain = data.get('gDomain')
+            g_level = data.get('gLevel')
+
+            # Insert into guide table
+            cursor.execute("""
+                INSERT INTO guide (G_id, G_name, G_domain, G_level)
+                VALUES (%s, %s, %s, %s)
+            """, (g_id, g_name, g_domain, g_level))
+
+            user_id = g_id  # For login table
+
+        # Insert into Login table
+        cursor.execute("""
+            INSERT INTO Login (UserID, Email, Password, Role)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, email, password, role))
+
         mysql.connection.commit()
-
-        # Close the connection
         cursor.close()
 
         return jsonify({"message": "Account created successfully!"}), 201
-    except mysql.connector.Error as e:
-        # Handling database errors
+    except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 
 
@@ -206,6 +222,185 @@ def login():
     else:
         # User not found
         return jsonify({'message': 'Invalid credentials'}), 401
+
+
+
+
+# Endpoint for fetching teams associated with a specific G_id
+@app.route('/teacher-teams', methods=['GET'])
+def teacher_teams():
+    g_id = request.args.get('gId')  # Get the G_id from the query parameters
+
+    if not g_id:
+        return jsonify({"error": "G_id parameter is required"}), 400
+
+    results = {}
+
+    # Fetch teams where the guide (teacher) is associated
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT T_id, Project_Title, SRN1, SRN2, SRN3, SRN4 
+        FROM team WHERE G_id = %s
+    """, (g_id,))
+    teams = cur.fetchall()
+    results['teams'] = [
+        {
+            'T_id': row[0], 'Project_Title': row[1], 
+            'SRNs': [srn for srn in row[2:6] if srn]
+        } for row in teams
+    ]
+
+    cur.close()
+    return jsonify(results)
+
+
+# Endpoint to fetch student details by SRN
+@app.route('/student-details', methods=['GET'])
+def student_details():
+    srn = request.args.get('srn')  # Get the SRN from query parameters
+    results = {}
+
+    if not srn:
+        return jsonify({"error": "SRN parameter is required"}), 400
+
+    # Fetch student details
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM student WHERE SRN = %s", (srn,))
+    student = cur.fetchone()
+    if student:
+        results['student'] = {
+            'SRN': student[0], 'Name': student[1], 'Email': student[2], 
+            'Phone': student[3], 'GPA': student[4]
+        }
+    else:
+        return jsonify({})
+
+    cur.close()
+    return jsonify(results)
+
+
+
+# Endpoint to fetch marksheet data by SRN
+@app.route('/marksheet-by-srn', methods=['GET'])
+def marksheet_by_srn():
+    srn = request.args.get('srn')  # Get the SRN from query parameters
+    results = {}
+
+    if not srn:
+        return jsonify({"error": "SRN parameter is required"}), 400
+
+    # Fetch marksheet data for the specified SRN
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM marksheet WHERE SRN = %s", (srn,))
+    marksheets = cur.fetchall()
+
+    if marksheets:
+        results['marksheets'] = [
+            {
+                'SRN': row[0], 'G_id': row[1], 'T_id': row[2], 'Assessment_Number': row[3],
+                'Parameter1': row[4], 'Parameter2': row[5], 'Parameter3': row[6], 'Parameter4': row[7],
+                'Average_Marks': row[8]
+            } for row in marksheets
+        ]
+    else:
+        return jsonify({})
+
+    cur.close()
+    return jsonify(results)
+
+
+
+
+# Endpoint for creating a new team
+@app.route('/create-team', methods=['POST'])
+def create_team():
+    data = request.get_json()
+
+    # Ensure all required fields are present
+    required_fields = ['T_id', 'Project_Title', 'SRN1', 'SRN2', 'SRN3', 'SRN4', 'T_domain']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+
+    t_id = data['T_id']
+    project_title = data['Project_Title']
+    srn1 = data['SRN1']
+    srn2 = data['SRN2']
+    srn3 = data['SRN3']
+    srn4 = data['SRN4']
+    t_domain = data['T_domain']
+    g_id = data['G_id']  # Teacher's guide ID
+
+    # Check if the team already exists
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM team WHERE T_id = %s", (t_id,))
+    existing_team = cur.fetchone()
+    if existing_team:
+        return jsonify({"error": "Team ID already exists"}), 400
+
+    # Check if any student is already in another team
+    cur.execute("SELECT * FROM team WHERE SRN1 = %s OR SRN2 = %s OR SRN3 = %s OR SRN4 = %s", 
+                (srn1, srn2, srn3, srn4))
+    conflicting_teams = cur.fetchall()
+    if conflicting_teams:
+        return jsonify({"error": "One or more students are already in another team"}), 400
+
+    # Insert the new team
+    try:
+        cur.execute("""
+            INSERT INTO team (T_id, Project_Title, SRN1, SRN2, SRN3, SRN4, G_id, T_domain)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (t_id, project_title, srn1, srn2, srn3, srn4, g_id, t_domain))
+        mysql.connection.commit()
+        return jsonify({"message": "Team created successfully!"}), 201
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+
+
+# Endpoint to fetch all student details
+@app.route('/get_student_list', methods=['GET'])
+def get_all_students():
+    # Fetch all students not in any team
+    cur = mysql.connection.cursor()
+
+    # Fixed SQL query to fetch students not in any team
+    query = """
+        SELECT SRN, Name, Email, Phone, GPA
+        FROM student
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM team
+            WHERE team.SRN1 = student.SRN
+               OR team.SRN2 = student.SRN
+               OR team.SRN3 = student.SRN
+               OR team.SRN4 = student.SRN
+        );
+    """
+    cur.execute(query)
+    
+    students = cur.fetchall()  # Fetch all students that are not in teams
+    results = []
+
+    if students:
+        for student in students:
+            results.append({
+                'SRN': student[0], 
+                'Name': student[1], 
+                'Email': student[2], 
+                'Phone': student[3], 
+                'GPA': student[4]
+            })
+    else:
+        return jsonify({"error": "No students found"}), 404
+
+    cur.close()
+    return jsonify({"students": results})
+
+
+
 
 
 
