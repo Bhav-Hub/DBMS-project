@@ -15,8 +15,6 @@ mysql = MySQL(app)
 
 
 
-
-
 # Modify the '/student' endpoint to retrieve user data based on the logged-in UserID
 @app.route('/student', methods=['POST'])
 def student_view():
@@ -279,8 +277,6 @@ def student_details():
     return jsonify(results)
 
 
-
-# Endpoint to fetch marksheet data by SRN
 @app.route('/marksheet-by-srn', methods=['GET'])
 def marksheet_by_srn():
     srn = request.args.get('srn')  # Get the SRN from query parameters
@@ -289,24 +285,63 @@ def marksheet_by_srn():
     if not srn:
         return jsonify({"error": "SRN parameter is required"}), 400
 
-    # Fetch marksheet data for the specified SRN
     cur = mysql.connection.cursor()
+
+    # Fetch student details for the specified SRN
+    cur.execute("SELECT * FROM student WHERE SRN = %s", (srn,))
+    student = cur.fetchone()
+
+    # If no student found
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    # Add student details to the results
+    results['student'] = {
+        'SRN': student[0],
+        'Name': student[1],
+        'Email': student[2],
+        'Phone': student[3],
+        'GPA': student[4]
+    }
+
+    # Fetch marksheet data for the specified SRN
     cur.execute("SELECT * FROM marksheet WHERE SRN = %s", (srn,))
     marksheets = cur.fetchall()
 
+    # Fetch semester details for the specified SRN
+    cur.execute("SELECT Sem_5, Sem_6, Sem_7, Sem_8 FROM semester WHERE SRN = %s", (srn,))
+    semester_data = cur.fetchone()
+
     if marksheets:
-        results['marksheets'] = [
-            {
-                'SRN': row[0], 'G_id': row[1], 'T_id': row[2], 'Assessment_Number': row[3],
+        results['marksheets'] = []
+        
+        # Map assessment numbers to semester grades
+        assessment_to_semester = {3: 'Sem_5', 6: 'Sem_6', 9: 'Sem_7', 11: 'Sem_8'}
+        
+        for row in marksheets:
+            assessment_num = row[3]
+            marksheet_entry = {
+                'SRN': row[0], 'G_id': row[1], 'T_id': row[2], 'Assessment_Number': assessment_num,
                 'Parameter1': row[4], 'Parameter2': row[5], 'Parameter3': row[6], 'Parameter4': row[7],
                 'Average_Marks': row[8]
-            } for row in marksheets
-        ]
+            }
+
+            # Add semester grade if assessment number matches the specified mapping
+            if assessment_num in assessment_to_semester and semester_data:
+                semester_key = assessment_to_semester[assessment_num]
+                marksheet_entry['Semester'] = semester_key
+                marksheet_entry['Grade'] = semester_data[{'Sem_5': 0, 'Sem_6': 1, 'Sem_7': 2, 'Sem_8': 3}[semester_key]]
+            else:
+                marksheet_entry['Semester'] = None
+                marksheet_entry['Grade'] = '-'
+            
+            results['marksheets'].append(marksheet_entry)
     else:
-        return jsonify({})
+        results['marksheets'] = []  # No marksheet entries
 
     cur.close()
     return jsonify(results)
+
 
 
 
@@ -354,7 +389,7 @@ def create_team():
         mysql.connection.commit()
         return jsonify({"message": "Team created successfully!"}), 201
     except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        return jsonify({"error": f"One or more students are already in another team"}), 500
 
 
 
@@ -400,6 +435,53 @@ def get_all_students():
     return jsonify({"students": results})
 
 
+
+@app.route('/add-marksheet', methods=['POST'])
+def add_marksheet():
+    data = request.get_json()  # Get the JSON data from the request body
+    
+    # Extract data from the request
+    srn = data.get('SRN')
+    g_id = data.get('G_id')  # Teacher's G_Id
+    assessment_number = data.get('Assessment_Number')
+    parameter1 = data.get('Parameter1')
+    parameter2 = data.get('Parameter2')
+    parameter3 = data.get('Parameter3')
+    parameter4 = data.get('Parameter4')
+    
+    # Check if all required fields are provided
+    if not all([srn, g_id, assessment_number, parameter1, parameter2, parameter3, parameter4]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    # Check if the teacher has access to the student
+    cur = mysql.connection.cursor()
+
+    # Verify if the SRN exists
+    cur.execute("SELECT * FROM student WHERE SRN = %s", (srn,))
+    student = cur.fetchone()
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    # Fetch the T_id (Team ID) associated with this student
+    cur.execute("SELECT T_id FROM team WHERE G_id = %s AND (SRN1 = %s OR SRN2 = %s OR SRN3 = %s OR SRN4 = %s)", 
+                (g_id, srn, srn, srn, srn))
+    team = cur.fetchone()
+    if not team:
+        return jsonify({"error": "Teacher does not have access to this student"}), 403
+    print("Team: ",team)
+    # The T_id should be the one already associated with the student in the team
+    t_id = team[0]
+
+    # Insert the marksheet into the database with the student's T_id
+    cur.execute("""
+        INSERT INTO marksheet (SRN, G_id, T_id, Assessment_Number, Parameter1, Parameter2, Parameter3, Parameter4)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (srn, g_id, t_id, assessment_number, parameter1, parameter2, parameter3, parameter4))
+
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({"message": "Marksheets added successfully"}), 201
 
 
 

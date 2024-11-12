@@ -1,5 +1,5 @@
 -- CREATE DATABASE CAPSTONERS;
--- USE CAPSTONERS;
+USE CAPSTONERS;
 
 
 -- CREATE TABLE Login (
@@ -56,27 +56,28 @@
 --   CONSTRAINT different_guides CHECK (G_id1 <> G_id2 AND G_id2 <> G_id3 AND G_id1 <> G_id3)
 -- );
 
--- CREATE TABLE team (
---   T_id varchar(20) NOT NULL,
---   Project_Title varchar(200) NOT NULL,
---   SRN1 varchar(20) NOT NULL,
---   SRN2 varchar(20) NOT NULL,
---   SRN3 varchar(20) NOT NULL,
---   SRN4 varchar(20) NOT NULL,
---   G_id varchar(20) NOT NULL,
---   T_domain enum('ML','CyberSec','Network','Blockchain') NOT NULL,
---   PRIMARY KEY (T_id),
---   KEY SRN1 (SRN1),
---   KEY SRN2 (SRN2),
---   KEY SRN3 (SRN3),
---   KEY SRN4 (SRN4),
---   KEY idx_team_guide (G_id),
---   CONSTRAINT team_ibfk_1 FOREIGN KEY (SRN1) REFERENCES student (SRN),
---   CONSTRAINT team_ibfk_2 FOREIGN KEY (SRN2) REFERENCES student (SRN),
---   CONSTRAINT team_ibfk_3 FOREIGN KEY (SRN3) REFERENCES student (SRN),
---   CONSTRAINT team_ibfk_4 FOREIGN KEY (SRN4) REFERENCES student (SRN),
---   CONSTRAINT team_ibfk_5 FOREIGN KEY (G_id) REFERENCES guide (G_id)
--- );
+-- CREATE TABLE `team` (
+--   `T_id` varchar(20) NOT NULL,
+--   `Project_Title` varchar(200) NOT NULL,
+--   `SRN1` varchar(20) NOT NULL,
+--   `SRN2` varchar(20) NOT NULL,
+--   `SRN3` varchar(20) NOT NULL,
+--   `SRN4` varchar(20) NOT NULL,
+--   `G_id` varchar(20) NOT NULL,
+--   `T_domain` enum('ML','CyberSec','Network','Blockchain') NOT NULL,
+--   PRIMARY KEY (`T_id`,`SRN1`,`SRN2`,`SRN3`,`SRN4`),
+--   KEY `SRN1` (`SRN1`),
+--   KEY `SRN2` (`SRN2`),
+--   KEY `SRN3` (`SRN3`),
+--   KEY `SRN4` (`SRN4`),
+--   KEY `idx_team_guide` (`G_id`),
+--   CONSTRAINT `team_ibfk_1` FOREIGN KEY (`SRN1`) REFERENCES `student` (`SRN`),
+--   CONSTRAINT `team_ibfk_2` FOREIGN KEY (`SRN2`) REFERENCES `student` (`SRN`),
+--   CONSTRAINT `team_ibfk_3` FOREIGN KEY (`SRN3`) REFERENCES `student` (`SRN`),
+--   CONSTRAINT `team_ibfk_4` FOREIGN KEY (`SRN4`) REFERENCES `student` (`SRN`),
+--   CONSTRAINT `team_ibfk_5` FOREIGN KEY (`G_id`) REFERENCES `guide` (`G_id`),
+--   CONSTRAINT `unique_srns` CHECK (((`SRN1` <> `SRN2`) and (`SRN1` <> `SRN3`) and (`SRN1` <> `SRN4`) and (`SRN2` <> `SRN3`) and (`SRN2` <> `SRN4`) and (`SRN3` <> `SRN4`)))
+-- ) 
 
 -- CREATE TABLE marksheet (
 --   SRN varchar(20) NOT NULL,
@@ -137,6 +138,8 @@
 -- DELIMITER ;
 
 -- DELIMITER //
+
+
 -- CREATE PROCEDURE GetStudentsByGrade(IN input_grade CHAR(1))
 -- BEGIN
 --   SELECT 
@@ -159,6 +162,108 @@
 --     OR semester.Sem_8 = input_grade;
 -- END //
 -- DELIMITER ;
+
+
+
+
+-- DELIMITER //
+-- CREATE TRIGGER calculate_semester_grades
+-- AFTER INSERT ON marksheet
+-- FOR EACH ROW
+-- BEGIN
+--     -- Declare all variables at the beginning of the trigger
+--     DECLARE avg_sem5 DECIMAL(5,2) DEFAULT NULL;
+--     DECLARE avg_sem6 DECIMAL(5,2) DEFAULT NULL;
+--     DECLARE avg_sem7 DECIMAL(5,2) DEFAULT NULL;
+--     DECLARE avg_sem8 DECIMAL(5,2) DEFAULT NULL;
+--     
+--     DECLARE grade5 CHAR(1) DEFAULT '-';
+--     DECLARE grade6 CHAR(1) DEFAULT '-';
+--     DECLARE grade7 CHAR(1) DEFAULT '-';
+--     DECLARE grade8 CHAR(1) DEFAULT '-';
+
+--     -- Calculate average marks for each semester's assessments
+--     -- Semester 5: Assessments 1, 2, 3
+--     SELECT AVG(avg_marks) INTO avg_sem5
+--     FROM marksheet
+--     WHERE SRN = NEW.SRN AND Assessment_Number IN (1, 2, 3);
+--     
+--     -- Semester 6: Assessments 4, 5, 6
+--     SELECT AVG(avg_marks) INTO avg_sem6
+--     FROM marksheet
+--     WHERE SRN = NEW.SRN AND Assessment_Number IN (4, 5, 6);
+
+--     -- Semester 7: Assessments 7, 8, 9
+--     SELECT AVG(avg_marks) INTO avg_sem7
+--     FROM marksheet
+--     WHERE SRN = NEW.SRN AND Assessment_Number IN (7, 8, 9);
+
+--     -- Semester 8: Assessments 10, 11
+--     SELECT AVG(avg_marks) INTO avg_sem8
+--     FROM marksheet
+--     WHERE SRN = NEW.SRN AND Assessment_Number IN (10, 11);
+--     
+--     -- Assign grades based on average marks
+--     IF avg_sem5 IS NOT NULL THEN
+--         SET grade5 = CASE
+--             WHEN avg_sem5 >= 90 THEN 'S'
+--             WHEN avg_sem5 >= 80 THEN 'A'
+--             WHEN avg_sem5 >= 70 THEN 'B'
+--             WHEN avg_sem5 >= 60 THEN 'C'
+--             WHEN avg_sem5 >= 50 THEN 'D'
+--             ELSE 'F'
+--         END;
+--     END IF;
+
+--     IF avg_sem6 IS NOT NULL THEN
+--         SET grade6 = CASE
+--             WHEN avg_sem6 >= 90 THEN 'S'
+--             WHEN avg_sem6 >= 80 THEN 'A'
+--             WHEN avg_sem6 >= 70 THEN 'B'
+--             WHEN avg_sem6 >= 60 THEN 'C'
+--             WHEN avg_sem6 >= 50 THEN 'D'
+--             ELSE 'F'
+--         END;
+--     END IF;
+
+--     IF avg_sem7 IS NOT NULL THEN
+--         SET grade7 = CASE
+--             WHEN avg_sem7 >= 90 THEN 'S'
+--             WHEN avg_sem7 >= 80 THEN 'A'
+--             WHEN avg_sem7 >= 70 THEN 'B'
+--             WHEN avg_sem7 >= 60 THEN 'C'
+--             WHEN avg_sem7 >= 50 THEN 'D'
+--             ELSE 'F'
+--         END;
+--     END IF;
+
+--     IF avg_sem8 IS NOT NULL THEN
+--         SET grade8 = CASE
+--             WHEN avg_sem8 >= 90 THEN 'S'
+--             WHEN avg_sem8 >= 80 THEN 'A'
+--             WHEN avg_sem8 >= 70 THEN 'B'
+--             WHEN avg_sem8 >= 60 THEN 'C'
+--             WHEN avg_sem8 >= 50 THEN 'D'
+--             ELSE 'F'
+--         END;
+--     END IF;
+
+--     -- Update the semester table with calculated grades
+--     UPDATE semester
+--     SET Sem_5 = grade5,
+--         Sem_6 = grade6,
+--         Sem_7 = grade7,
+--         Sem_8 = grade8
+--     WHERE SRN = NEW.SRN;
+--     
+-- END //
+-- DELIMITER ;
+
+
+
+
+
+
 
 
 
@@ -196,8 +301,9 @@
 
 -- INSERT INTO team (T_id, Project_Title, SRN1, SRN2, SRN3, SRN4, G_id, T_domain) VALUES
 -- ('T001', 'AI-based Security System', 'PES1UG22CS001', 'PES1UG22CS002', 'PES1UG22CS003', 'PES1UG22CS004', 'G001', 'ML'),
--- ('T002', 'Blockchain Voting System', 'PES1UG22CS002', 'PES1UG22CS003', 'PES1UG22CS004', 'PES1UG22CS005', 'G004', 'Blockchain'),
--- ('T003', 'Cyber Defense Model', 'PES1UG22CS003', 'PES1UG22CS001', 'PES1UG22CS005', 'PES1UG22CS002', 'G002', 'CyberSec');
+-- ('T002', 'Blockchain Voting System', 'PES1UG22CS005', 'PES1UG22CS006', 'PES1UG22CS007', 'PES1UG22CS008', 'G004', 'Blockchain'),
+-- ('T003', 'Cyber Defense Model', 'PES1UG22CS009', 'PES1UG22CS010', 'PES1UG22CS011', 'PES1UG22CS012', 'G002', 'CyberSec'),
+-- ('T004', 'IOT-ML-based Smart City', 'PES1UG22CS013', 'PES1UG22CS014', 'PES1UG22CS015', 'PES1UG22CS016', 'G001', 'ML');
 
 
 -- INSERT INTO marksheet (SRN, G_id, T_id, Assessment_Number, Parameter1, Parameter2, Parameter3, Parameter4, avg_marks) VALUES
@@ -216,6 +322,12 @@ select * from guide;
 select * from semester;
 select * from panel;
 select * from login;
+
+
+describe team
+
+
+
 
 
 
