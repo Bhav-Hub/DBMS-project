@@ -5,8 +5,7 @@ import StudentView from './StudentView';
 
 function StudentPage() {
     return (
-        <div>
-            <h2>Student Page</h2>
+        <div className='Student Page' style={{ width: '70%', margin: '0 auto' }}>
             <StudentView />
         </div>
     );

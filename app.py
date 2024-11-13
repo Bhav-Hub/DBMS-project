@@ -37,6 +37,19 @@ def student_view():
     else:
         return jsonify({"error": "Student not found"}), 404
 
+
+
+
+
+    cur.execute("SELECT * FROM semester WHERE SRN = %s", (user_id,))
+    semester_data = cur.fetchone()
+    semester_grades = {
+        'Sem_5': semester_data[1],
+        'Sem_6': semester_data[2],
+        'Sem_7': semester_data[3],
+        'Sem_8': semester_data[4]
+    } if semester_data else {}
+
     # Fetch marksheet data for the student
     cur.execute("SELECT * FROM marksheet WHERE SRN = %s", (user_id,))
     marksheets = cur.fetchall()
@@ -44,9 +57,21 @@ def student_view():
         {
             'SRN': row[0], 'G_id': row[1], 'T_id': row[2], 'Assessment_Number': row[3],
             'Parameter1': row[4], 'Parameter2': row[5], 'Parameter3': row[6], 'Parameter4': row[7],
-            'Average_Marks': row[8]
+            'Average_Marks': row[8],
+            'Semester_Grade': (
+                semester_grades['Sem_5'] if row[3] == 3 else
+                semester_grades['Sem_6'] if row[3] == 6 else
+                semester_grades['Sem_7'] if row[3] == 9 else
+                semester_grades['Sem_8'] if row[3] == 11 else None
+            )
         } for row in marksheets
     ]
+    
+    
+    
+    
+    
+    
 
     # Fetch team data for the student
     cur.execute("""
@@ -60,8 +85,22 @@ def student_view():
         } for row in teams
     ]
 
+    
+    cur.execute("""
+                SELECT * FROM guide where G_id = %s
+                """, (teams[0][6],))
+    guides = cur.fetchall()
+    results['guides'] = [
+        {
+            'G_id': row[0], 'G_name': row[1], 'G_domain': row[2], 'G_level': row[3]
+        } for row in guides
+        ]
+    
+    print(results)
     cur.close()
     return jsonify(results)
+
+    
 
 
 
@@ -194,7 +233,7 @@ def login():
 
     if data['role'] == 'student':
         user_id = data['srn']
-    else:
+    elif data['role'] == 'teacher':
         user_id = data['gId']
     password = data['password']
     role = data['role']
@@ -206,9 +245,9 @@ def login():
     # Query the database based on the role
     cursor = mysql.connection.cursor()
     if role == 'student':
-        cursor.execute('SELECT * FROM login WHERE UserID = %s AND Password = %s', (user_id, password))
+        cursor.execute('SELECT * FROM login WHERE UserID = %s AND Password = %s AND role = %s', (user_id, password, role))
     elif role == 'teacher':
-        cursor.execute('SELECT * FROM login WHERE  UserID = %s AND password = %s', (user_id, password))
+        cursor.execute('SELECT * FROM login WHERE  UserID = %s AND password = %s AND Role = %s', (user_id, password, role))
     else:
         return jsonify({'message': 'Invalid role or missing SRN/G_ID'}), 400
 
@@ -484,6 +523,32 @@ def add_marksheet():
     return jsonify({"message": "Marksheets added successfully"}), 201
 
 
+@app.route('/get_students_by_grade', methods=['GET'])
+def get_students_by_grade():
+    grade = request.args.get('grade')
+    guide_id = request.args.get('guide_id')
+
+    if not grade or not guide_id:
+        return jsonify({"error": "Grade and Guide ID are required"}), 400
+
+    try:
+        # Connect to the database
+        cur = mysql.connection.cursor()
+
+        # Call the stored procedure
+        cur.callproc('GetStudentsByGrade', [grade, guide_id])
+
+        # Fetch the result set
+        students = []
+        for result in cur.fetchall():
+            students.append(result)
+        print(students)
+        return jsonify(students), 200
+    except mysql.connector.Error as err:
+        print("Database error:", err)
+        return jsonify({"error": str(err)}), 500
+    finally:
+        cur.close()
 
 
 if __name__ == '__main__':

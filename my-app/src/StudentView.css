@@ -1,0 +1,68 @@
+.student-view-container {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.nav-buttons {
+    margin-bottom: 20px;
+}
+
+.nav-buttons button {
+    margin-right: 10px;
+    padding: 10px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.nav-buttons button:hover {
+    background-color: #0056b3;
+}
+
+.active-tab {
+    margin-top: 20px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Add spacing between marksheet containers */
+}
+
+.box {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #fafafa;
+}
+
+.box p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.box strong {
+    color: #333;
+}
+
+ul {
+    padding-left: 20px;
+}
+
+ul li {
+    margin: 5px 0;
+}
+
+.loading {
+    font-size: 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
