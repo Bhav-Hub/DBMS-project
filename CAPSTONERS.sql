@@ -20,6 +20,7 @@ USE CAPSTONERS;
 --   PRIMARY KEY (SRN),
 --   UNIQUE KEY Email (Email),
 --   CONSTRAINT student_chk_1 CHECK (gpa >= 0.00 AND gpa <= 10.00)
+--   CONSTRAINT fk_student_login FOREIGN KEY (SRN) REFERENCES login(UserID)
 -- );
 
 -- CREATE TABLE semester (
@@ -39,6 +40,7 @@ USE CAPSTONERS;
 --   G_domain enum('ML','CyberSec','Network','Blockchain') NOT NULL,
 --   G_level enum('Professor','Associate Professor','Assistant Professor') NOT NULL,
 --   PRIMARY KEY (G_id)
+--   CONSTRAINT fk_guide_login FOREIGN KEY (G_id) REFERENCES login(UserID)
 -- );
 
 -- CREATE TABLE panel (
@@ -140,13 +142,17 @@ USE CAPSTONERS;
 -- DELIMITER //
 
 
--- CREATE PROCEDURE GetStudentsByGrade(IN input_grade CHAR(1))
+-- DELIMITER //
+-- CREATE PROCEDURE GetStudentsByGrade(
+--     IN input_grade CHAR(1),
+--     IN input_G_id VARCHAR(20)
+-- )
 -- BEGIN
 --   SELECT 
 --     student.SRN,
 --     student.Name AS Student_Name,
---     team.Project_Title AS Team_Name,
---     guide.G_name AS Team_Guide
+--     team.T_id as Team_ID,
+--     team.Project_Title AS Project_Title
 --   FROM
 --     semester
 --   INNER JOIN 
@@ -156,12 +162,14 @@ USE CAPSTONERS;
 --   INNER JOIN 
 --     guide ON team.G_id = guide.G_id
 --   WHERE 
---     semester.Sem_5 = input_grade 
+--     (semester.Sem_5 = input_grade 
 --     OR semester.Sem_6 = input_grade 
 --     OR semester.Sem_7 = input_grade 
---     OR semester.Sem_8 = input_grade;
+--     OR semester.Sem_8 = input_grade)
+--     AND guide.G_id = input_G_id;
 -- END //
 -- DELIMITER ;
+
 
 
 
@@ -265,6 +273,35 @@ USE CAPSTONERS;
 
 
 
+-- INSERT INTO Login (UserID, Email, Password, Role) VALUES
+-- ('PES1UG22CS001', 'amit.sharma@example.com', '001', 'Student'),
+-- ('PES1UG22CS002', 'rajesh.kumar@example.com', '002', 'Student'),
+-- ('PES1UG22CS003', 'priya.singh@example.com', '003', 'Student'),
+-- ('PES1UG22CS004', 'anjali.gupta@example.com', '004', 'Student'),
+-- ('PES1UG22CS005', 'sunita.menon@example.com', '005', 'Student'),
+-- ('PES1UG22CS006', 'vikram.patel@example.com', '006', 'Student'),
+-- ('PES1UG22CS007', 'nisha.iyer@example.com', '007', 'Student'),
+-- ('PES1UG22CS008', 'aakash.verma@example.com', '008', 'Student'),
+-- ('PES1UG22CS009', 'suresh.reddy@example.com', '009', 'Student'),
+-- ('PES1UG22CS010', 'meena.joshi@example.com', '010', 'Student'),
+-- ('PES1UG22CS011', 'pooja.thakur@example.com', '011', 'Student'),
+-- ('PES1UG22CS012', 'arjun.singh@example.com', '012', 'Student'),
+-- ('PES1UG22CS013', 'kavita.naik@example.com', '013', 'Student'),
+-- ('PES1UG22CS014', 'rohit.shetty@example.com', '014', 'Student'),
+-- ('PES1UG22CS015', 'lakshmi.rao@example.com', '015', 'Student'),
+-- ('PES1UG22CS016', 'manoj.sharma@example.com', '016', 'Student'),
+-- ('PES1UG22CS017', 'sneha.kulkarni@example.com', '017', 'Student'),
+-- ('PES1UG22CS142', '142@example.com', '142', 'Student'),
+-- ('PES1UG22CS143', '143@example.com', '143', 'Student'),
+-- ('PES1UG22CS144', '144@example.com', '144', 'Student');
+-- ('G001', 'arvind.desai@example.com', '001', 'Teacher'),
+-- ('G002', 'reema.patil@example.com', '002', 'Teacher'),
+-- ('G003', 'manish.k@example.com', '003', 'Teacher'),
+-- ('G004', 'kavita.rao@example.com', '004', 'Teacher'),
+-- ('G005', 'suresh.iyer@example.com', '005', 'Teacher');
+
+
+
 
 
 
@@ -314,7 +351,6 @@ USE CAPSTONERS;
 -- ('PES1UG22CS005', 'G004', 'T002', 1, 70.00, 65.00, 68.00, 72.00, 68.75);
 
 
-
 select * from student;
 select * from team;
 select * from marksheet;
@@ -322,13 +358,6 @@ select * from guide;
 select * from semester;
 select * from panel;
 select * from login;
-
-
-describe team
-
-
-
-
 
 
 

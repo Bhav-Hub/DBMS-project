@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './CreateAccountPage.css';
+
 
 function CreateAccountPage() {
     const [role, setRole] = useState('student');  // Default role is 'student'
@@ -50,7 +52,7 @@ function CreateAccountPage() {
     };
 
     return (
-        <div>
+        <div className="create-account-container">
             <h2>Create Account</h2>
             <label>
                 Select Role:

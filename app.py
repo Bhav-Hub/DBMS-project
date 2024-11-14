@@ -39,8 +39,6 @@ def student_view():
 
 
 
-
-
     cur.execute("SELECT * FROM semester WHERE SRN = %s", (user_id,))
     semester_data = cur.fetchone()
     semester_grades = {
@@ -68,10 +66,7 @@ def student_view():
     ]
     
     
-    
-    
-    
-    
+
 
     # Fetch team data for the student
     cur.execute("""
@@ -85,10 +80,10 @@ def student_view():
         } for row in teams
     ]
 
-    
-    cur.execute("""
-                SELECT * FROM guide where G_id = %s
-                """, (teams[0][6],))
+    if results['teams']:
+        cur.execute("""
+                    SELECT * FROM guide where G_id = %s
+                    """, (teams[0][6],))
     guides = cur.fetchall()
     results['guides'] = [
         {
@@ -96,9 +91,8 @@ def student_view():
         } for row in guides
         ]
     
-    print(results)
     cur.close()
-    return jsonify(results)
+    return jsonify(results) 
 
     
 
@@ -175,6 +169,7 @@ def create_account():
     email = data['email']
     password = data['password']
 
+
     try:
         cursor = mysql.connection.cursor()
 
@@ -191,6 +186,11 @@ def create_account():
                 VALUES (%s, %s, %s, %s, %s)
             """, (srn, name, email, phone, gpa))
 
+            cursor.execute("""
+                            INSERT INTO semester(SRN, Sem_5, Sem_6, Sem_7, Sem_8)
+                            VALUES (%s,'-','-','-', '-')
+                            """, (srn,))
+            
             user_id = srn  # For login table
 
         # Teacher role
@@ -214,6 +214,8 @@ def create_account():
             VALUES (%s, %s, %s, %s)
         """, (user_id, email, password, role))
 
+
+
         mysql.connection.commit()
         cursor.close()
 
@@ -229,7 +231,6 @@ def create_account():
 def login():
     # Get the login data from the request body
     data = request.get_json()
-    print(data)
 
     if data['role'] == 'student':
         user_id = data['srn']
@@ -276,10 +277,18 @@ def teacher_teams():
     # Fetch teams where the guide (teacher) is associated
     cur = mysql.connection.cursor()
     cur.execute("""
-        SELECT T_id, Project_Title, SRN1, SRN2, SRN3, SRN4 
-        FROM team WHERE G_id = %s
-    """, (g_id,))
+        SELECT T_id, Project_Title, SRN1, SRN2, SRN3, SRN4
+        FROM team
+        WHERE G_id IN (
+            SELECT G_id1 FROM panel WHERE G_id1 = %s OR G_id2 = %s OR G_id3 = %s
+            UNION
+            SELECT G_id2 FROM panel WHERE G_id1 = %s OR G_id2 = %s OR G_id3 = %s
+            UNION
+            SELECT G_id3 FROM panel WHERE G_id1 = %s OR G_id2 = %s OR G_id3 = %s
+        )
+    """, (g_id,g_id,g_id,g_id,g_id,g_id,g_id,g_id,g_id,))
     teams = cur.fetchall()
+    print(teams)
     results['teams'] = [
         {
             'T_id': row[0], 'Project_Title': row[1], 
@@ -507,7 +516,7 @@ def add_marksheet():
     team = cur.fetchone()
     if not team:
         return jsonify({"error": "Teacher does not have access to this student"}), 403
-    print("Team: ",team)
+    
     # The T_id should be the one already associated with the student in the team
     t_id = team[0]
 
@@ -542,7 +551,7 @@ def get_students_by_grade():
         students = []
         for result in cur.fetchall():
             students.append(result)
-        print(students)
+     
         return jsonify(students), 200
     except mysql.connector.Error as err:
         print("Database error:", err)

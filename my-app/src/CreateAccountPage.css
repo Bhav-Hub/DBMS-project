@@ -1,0 +1,101 @@
+/* General Styles */
+.create-account-container {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: auto;
+}
+
+h2 {
+    text-align: center;
+    color: #007bff;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+input[type="number"] {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Form Section for Student */
+.student-form {
+    display: block;
+}
+
+.student-form input {
+    margin-bottom: 15px;
+}
+
+/* Form Section for Teacher */
+.teacher-form {
+    display: block;
+}
+
+.teacher-form input,
+.teacher-form select {
+    margin-bottom: 15px;
+}
+
+/* Role Selector */
+.role-selector {
+    margin-bottom: 20px;
+}
+
+.role-selector select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+}
+
+/* Error Messages */
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: -15px;
+    margin-bottom: 20px;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+    .create-account-container {
+        padding: 15px;
+    }
+
+    button {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
