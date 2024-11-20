@@ -9,7 +9,7 @@ CORS(app)
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = ''
 app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'CAPSTONERS'
+app.config['MYSQL_DB'] = 'CAPSTONE'
 
 mysql = MySQL(app)
 
